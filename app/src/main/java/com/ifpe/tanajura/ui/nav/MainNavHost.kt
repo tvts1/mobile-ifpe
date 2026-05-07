@@ -8,14 +8,16 @@ import androidx.navigation.compose.composable
 import com.ifpe.tanajura.HomePage
 import com.ifpe.tanajura.ListPage
 import com.ifpe.tanajura.MapPage
+import com.ifpe.tanajura.viewmodel.MainViewModel
 
 @Composable
 fun MainNavHost(navController: NavHostController,
-                modifier: Modifier = Modifier
+                modifier: Modifier = Modifier,
+                viewModel: MainViewModel
 ) {
     NavHost(navController, startDestination = Route.Home) {
-        composable<Route.Home> { HomePage(modifier = modifier) }
-        composable<Route.List> { ListPage(modifier = modifier) }
-        composable<Route.Map> { MapPage(modifier = modifier) }
+        composable<Route.Home> { HomePage(modifier = modifier, viewModel) }
+        composable<Route.List> { ListPage(modifier = modifier, viewModel) }
+        composable<Route.Map> { MapPage(modifier = modifier, viewModel) }
     }
 }

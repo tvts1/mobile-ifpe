@@ -27,10 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ifpe.tanajura.model.City
 import androidx.compose.foundation.lazy.items
+import com.ifpe.tanajura.viewmodel.MainViewModel
 
 @Composable
-fun ListPage(modifier: Modifier = Modifier) {
-    val cityList = remember { getCities().toMutableStateList() }
+fun ListPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
+    val cityList = viewModel.cities
 
     val activity = LocalActivity.current as Activity
 
@@ -46,6 +47,7 @@ fun ListPage(modifier: Modifier = Modifier) {
             CityItem(
                 city = city,
                 onClose = {
+                    viewModel.remove(city)
                     Toast.makeText(activity, "Removendo ${city.name}", Toast.LENGTH_SHORT).show()
                 },
                 onClick = {
@@ -84,8 +86,4 @@ fun CityItem(
             Icon(Icons.Filled.Close, contentDescription = "Close")
         }
     }
-}
-
-private fun getCities() = List(20) { i ->
-    City(name = "Cidade $i", weather = "Carregando clima...")
 }

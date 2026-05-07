@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels // <-- IMPORTANTE: Necessário para usar o by viewModels()
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,8 +23,12 @@ import com.ifpe.tanajura.ui.nav.BottomNavBar
 import com.ifpe.tanajura.ui.nav.BottomNavItem
 import com.ifpe.tanajura.ui.nav.MainNavHost
 import com.ifpe.tanajura.ui.theme.TanajuraTheme
+import com.ifpe.tanajura.viewmodel.MainViewModel // <-- IMPORTANTE: Importação da sua classe
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,11 +66,10 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        MainNavHost(navController = navController)
+                        MainNavHost(navController = navController, viewModel = viewModel)
                     }
                 }
             }
         }
     }
 }
-

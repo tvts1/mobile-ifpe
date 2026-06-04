@@ -3,6 +3,7 @@ package com.ifpe.tanajura.viewmodel
 import androidx.lifecycle.ViewModel
 
 import androidx.compose.runtime.toMutableStateList
+import com.google.android.gms.maps.model.LatLng
 
 import com.ifpe.tanajura.model.City
 private fun getCities() = List(20) { i ->
@@ -20,7 +21,7 @@ class MainViewModel : ViewModel() {
         _cities.remove(city)
     }
 
-    fun add(name: String) {
-        _cities.add(City(name = name))
+    fun add(name: String, location: LatLng? = null) {
+        _cities.add(City(name = name, location = location))
     }
 }

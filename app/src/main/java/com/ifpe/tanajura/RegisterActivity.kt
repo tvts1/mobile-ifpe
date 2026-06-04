@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +26,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ifpe.tanajura.ui.components.DataField
 import com.ifpe.tanajura.ui.components.PasswordField
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +70,7 @@ fun RegisterPage(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.size(16.dp))
 
-        DataField (
+        DataField(
             value = name,
             onValueChange = { name = it },
             label = "Nome completo"
@@ -108,12 +108,23 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         ) {
             Button(
                 onClick = {
+                    // Mantivemos a checagem das senhas antes de chamar o Firebase
                     if (password == confirmPassword) {
-                        Toast.makeText(activity, "Registro realizado com sucesso!", Toast.LENGTH_LONG).show()
-                        activity.finish()
+
+                        // Passo 1: Implementação do Firebase Auth
+                        Firebase.auth.createUserWithEmailAndPassword(email, password)
+                            .addOnCompleteListener(activity) { task ->
+                                if (task.isSuccessful) {
+                                    Toast.makeText(activity,
+                                        "Registro OK!", Toast.LENGTH_LONG).show()
+                                    activity.finish()
+                                } else {
+                                    Toast.makeText(activity,
+                                        "Registro FALHOU!", Toast.LENGTH_LONG).show()
+                                }
+                            }
                     } else {
-                        Toast.makeText(activity, "As senhas não iguais!", Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(activity, "As senhas não são iguais!", Toast.LENGTH_SHORT).show()
                     }
                 },
                 enabled = name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()

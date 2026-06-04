@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Importações do Firebase necessárias para o Passo 3
+// Importações do Firebase necessárias
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -94,11 +94,8 @@ fun LoginPage(modifier: Modifier = Modifier) {
                     Firebase.auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(activity) { task ->
                             if (task.isSuccessful) {
-                                activity.startActivity(
-                                    Intent(activity, MainActivity::class.java).setFlags(
-                                        Intent.FLAG_ACTIVITY_SINGLE_TOP
-                                    )
-                                )
+                                // O redirecionamento foi removido.
+                                // O código do Passo 1 (observador de estado de auth) fará o roteamento.
                                 Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
                             } else {
                                 Toast.makeText(activity, "Login FALHOU!", Toast.LENGTH_LONG).show()

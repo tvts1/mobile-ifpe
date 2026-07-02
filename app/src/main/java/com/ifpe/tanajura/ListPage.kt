@@ -19,14 +19,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ifpe.tanajura.model.City
+import com.ifpe.tanajura.model.Weather
 import androidx.compose.foundation.lazy.items
+import com.ifpe.tanajura.ui.nav.Route
 import com.ifpe.tanajura.viewmodel.MainViewModel
 
 @Composable
@@ -46,11 +46,14 @@ fun ListPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
         ) { city ->
             CityItem(
                 city = city,
+                weather = viewModel.weather(city.name),
                 onClose = {
                     viewModel.remove(city)
                     Toast.makeText(activity, "Removendo ${city.name}", Toast.LENGTH_SHORT).show()
                 },
                 onClick = {
+                    viewModel.city = city.name
+                    viewModel.page = Route.Home
                     Toast.makeText(activity, "Você clicou em ${city.name}", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -61,10 +64,13 @@ fun ListPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
 @Composable
 fun CityItem(
     city: City,
+    weather: Weather,
     onClick: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
+
     Row (
         modifier = modifier.fillMaxWidth().padding(8.dp).clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
@@ -79,7 +85,7 @@ fun CityItem(
                 text = city.name,
                 fontSize = 24.sp)
             Text(modifier = Modifier,
-                text = city.weather?:"Carregando clima...",
+                text = desc,
                 fontSize = 16.sp)
         }
         IconButton (onClick = onClose) {

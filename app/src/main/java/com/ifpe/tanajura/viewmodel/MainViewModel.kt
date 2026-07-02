@@ -1,17 +1,22 @@
 package com.ifpe.tanajura.viewmodel
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
 import com.ifpe.tanajura.api.WeatherService
+import com.ifpe.tanajura.api.toForecast
+import com.ifpe.tanajura.api.toWeather
 import com.ifpe.tanajura.db.fb.FBCity
 import com.ifpe.tanajura.db.fb.FBDatabase
 import com.ifpe.tanajura.db.fb.FBUser
 import com.ifpe.tanajura.db.fb.toFBCity
 import com.ifpe.tanajura.model.City
+import com.ifpe.tanajura.model.Forecast
 import com.ifpe.tanajura.model.User
+import com.ifpe.tanajura.model.Weather
+import com.ifpe.tanajura.ui.nav.Route
 
 class MainViewModel(
     private val db: FBDatabase,
@@ -19,14 +24,28 @@ class MainViewModel(
 ): ViewModel(),
     FBDatabase.Listener {
 
-    private val _cities = mutableStateListOf<City>()
+    private val _cities = mutableStateMapOf<String, City>()
 
     val cities: List<City>
-        get() = _cities.toList()
+        get() = _cities.values.toList().sortedBy { it.name }
+
+    private val _weather = mutableStateMapOf<String, Weather>()
+
+    private val _forecast = mutableStateMapOf<String, List<Forecast>?>()
 
     private val _user = mutableStateOf<User?> (null)
     val user : User?
         get() = _user.value
+
+    private var _city = mutableStateOf<String?>(null)
+    var city: String?
+        get() = _city.value
+        set(tmp) { _city.value = tmp }
+
+    private var _page = mutableStateOf<Route>(Route.Home)
+    var page: Route
+        get() = _page.value
+        set(tmp) { _page.value = tmp }
 
     init {
         db.setListener(this)
@@ -52,6 +71,32 @@ class MainViewModel(
         }
     }
 
+    fun weather(name: String) = _weather.getOrPut(name) {
+        loadWeather(name)
+        Weather.LOADING
+    }
+
+    fun forecast(name: String) = _forecast.getOrPut(name) {
+        loadForecast(name)
+        emptyList()
+    }
+
+    private fun loadWeather(name: String) {
+        service.getWeather(name) { apiWeather ->
+            apiWeather?.let {
+                _weather[name] = apiWeather.toWeather()
+            }
+        }
+    }
+
+    private fun loadForecast(name: String) {
+        service.getForecast(name) { apiForecast ->
+            apiForecast?.let {
+                _forecast[name] = apiForecast.toForecast()
+            }
+        }
+    }
+
     override fun onUserLoaded(user: FBUser) {
         _user.value = user.toUser()
     }
@@ -59,22 +104,25 @@ class MainViewModel(
     override fun onUserSignOut() {
         _user.value = null
         _cities.clear()
+        _weather.clear()
+        _forecast.clear()
+        city = null
+        page = Route.Home
     }
 
     override fun onCityAdded(city: FBCity) {
-        _cities.add(city.toCity())
+        _cities[city.name!!] = city.toCity()
     }
 
     override fun onCityUpdated(city: FBCity) {
-        val updatedCity = city.toCity()
-        val index = _cities.indexOfFirst { it.name == updatedCity.name }
-        if (index >= 0) {
-            _cities[index] = updatedCity
-        }
+        _cities.remove(city.name)
+        _cities[city.name!!] = city.toCity()
     }
 
     override fun onCityRemoved(city: FBCity) {
-        _cities.removeAll { it.name == city.name }
+        _cities.remove(city.name)
+        _weather.remove(city.name)
+        _forecast.remove(city.name)
     }
 }
 

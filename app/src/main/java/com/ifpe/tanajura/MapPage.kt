@@ -16,6 +16,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.ifpe.tanajura.viewmodel.MainViewModel
 import androidx.compose.runtime.getValue
+import com.ifpe.tanajura.model.Weather
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 
@@ -41,9 +42,12 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
     ) {
         viewModel.cities.forEach { city ->
             city.location?.let { location ->
+                val weather = viewModel.weather(city.name)
+                val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
                 Marker(
                     state = MarkerState(location),
                     title = city.name,
+                    snippet = desc,
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                 )
             }

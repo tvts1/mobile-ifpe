@@ -1,6 +1,7 @@
 package com.ifpe.tanajura
 
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -43,12 +45,17 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
         viewModel.cities.forEach { city ->
             city.location?.let { location ->
                 val weather = viewModel.weather(city.name)
+                val image = weather.bitmap
+                    ?: ContextCompat.getDrawable(context, R.drawable.loading)!!.toBitmap()
+                val marker = BitmapDescriptorFactory.fromBitmap(
+                    Bitmap.createScaledBitmap(image, 120, 120, false)
+                )
                 val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
                 Marker(
                     state = MarkerState(location),
                     title = city.name,
                     snippet = desc,
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    icon = marker
                 )
             }
         }

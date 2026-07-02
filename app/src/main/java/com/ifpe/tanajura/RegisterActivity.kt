@@ -31,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ifpe.tanajura.ui.components.DataField
 import com.ifpe.tanajura.ui.components.PasswordField
+import com.ifpe.tanajura.db.fb.FBDatabase
+import com.ifpe.tanajura.db.fb.toFBUser
+import com.ifpe.tanajura.model.User
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -108,25 +111,27 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         ) {
             Button(
                 onClick = {
-                    // Mantivemos a checagem das senhas antes de chamar o Firebase
-                    if (password == confirmPassword) {
+                    val cleanName = name.trim()
+                    val cleanEmail = email.trim()
 
-                        // Passo 1: Implementação do Firebase Auth
-                        Firebase.auth.createUserWithEmailAndPassword(email, password)
+                    if (password == confirmPassword) {
+                        Firebase.auth.createUserWithEmailAndPassword(cleanEmail, password)
                             .addOnCompleteListener(activity) { task ->
                                 if (task.isSuccessful) {
+                                    FBDatabase().register(User(cleanName, cleanEmail).toFBUser())
                                     Toast.makeText(activity,
                                         "Registro OK!", Toast.LENGTH_LONG).show()
                                 } else {
                                     Toast.makeText(activity,
-                                        "Registro FALHOU!", Toast.LENGTH_LONG).show()
+                                        "Registro FALHOU: ${task.exception?.localizedMessage}",
+                                        Toast.LENGTH_LONG).show()
                                 }
                             }
                     } else {
                         Toast.makeText(activity, "As senhas não são iguais!", Toast.LENGTH_SHORT).show()
                     }
                 },
-                enabled = name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()
+                enabled = name.isNotBlank() && email.isNotBlank() && password.isNotEmpty() && confirmPassword.isNotEmpty()
             ) {
                 Text("Registrar")
             }

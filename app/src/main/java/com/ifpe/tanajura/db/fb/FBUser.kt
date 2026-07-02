@@ -1,6 +1,6 @@
 package com.ifpe.tanajura.db.fb
 
-import com.ifpe.tanajura.com.ifpe.tanajura.model.User
+import com.ifpe.tanajura.model.User
 
 class FBUser {
     var name : String ? = null

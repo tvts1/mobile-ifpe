@@ -98,7 +98,11 @@ fun LoginPage(modifier: Modifier = Modifier) {
                                 // O código do Passo 1 (observador de estado de auth) fará o roteamento.
                                 Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
                             } else {
-                                Toast.makeText(activity, "Login FALHOU!", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    activity,
+                                    "Login FALHOU: ${task.exception?.localizedMessage}",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
                 },

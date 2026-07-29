@@ -16,11 +16,13 @@ import com.ifpe.tanajura.model.City
 import com.ifpe.tanajura.model.Forecast
 import com.ifpe.tanajura.model.User
 import com.ifpe.tanajura.model.Weather
+import com.ifpe.tanajura.monitor.ForecastMonitor
 import com.ifpe.tanajura.ui.nav.Route
 
 class MainViewModel(
     private val db: FBDatabase,
-    private val service: WeatherService
+    private val service: WeatherService,
+    private val monitor: ForecastMonitor
 ): ViewModel(),
     FBDatabase.Listener {
 
@@ -115,6 +117,7 @@ class MainViewModel(
     }
 
     override fun onUserSignOut() {
+        monitor.cancelAll()
         _user.value = null
         _cities.clear()
         _weather.clear()
@@ -124,15 +127,20 @@ class MainViewModel(
     }
 
     override fun onCityAdded(city: FBCity) {
-        _cities[city.name!!] = city.toCity()
+        val modelCity = city.toCity()
+        _cities[city.name!!] = modelCity
+        monitor.updateCity(modelCity)
     }
 
     override fun onCityUpdated(city: FBCity) {
+        val modelCity = city.toCity()
         _cities.remove(city.name)
-        _cities[city.name!!] = city.toCity()
+        _cities[city.name!!] = modelCity
+        monitor.updateCity(modelCity)
     }
 
     override fun onCityRemoved(city: FBCity) {
+        monitor.cancelCity(city.toCity())
         _cities.remove(city.name)
         _weather.remove(city.name)
         _forecast.remove(city.name)
@@ -141,13 +149,14 @@ class MainViewModel(
 
 class MainViewModelFactory(
     private val db : FBDatabase,
-    private val service : WeatherService
+    private val service : WeatherService,
+    private val monitor: ForecastMonitor
 ) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(db, service) as T
+            return MainViewModel(db, service, monitor) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

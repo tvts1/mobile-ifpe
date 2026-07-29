@@ -1,5 +1,8 @@
 package com.ifpe.tanajura
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +32,12 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.util.Consumer
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.ifpe.tanajura.api.WeatherService
 import com.ifpe.tanajura.db.fb.FBDatabase
+import com.ifpe.tanajura.monitor.ForecastMonitor
 import com.ifpe.tanajura.ui.nav.BottomNavBar
 import com.ifpe.tanajura.ui.nav.BottomNavItem
 import com.ifpe.tanajura.ui.nav.MainNavHost
@@ -49,16 +55,53 @@ class MainActivity : ComponentActivity() {
         setContent {
             val fbDB = remember { FBDatabase() }
             val weatherService = remember { WeatherService(this@MainActivity) }
+            val forecastMonitor = remember { ForecastMonitor(this@MainActivity) }
             val viewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(fbDB, weatherService)
+                factory = MainViewModelFactory(
+                    fbDB,
+                    weatherService,
+                    forecastMonitor
+                )
             )
             var showDialog by remember { mutableStateOf(false) }
             val navController = rememberNavController()
             val currentRoute = navController.currentBackStackEntryAsState()
             val showButton = currentRoute.value?.destination?.hasRoute(Route.List::class) == true
-            val launcher = rememberLauncherForActivityResult(
-                contract =
-                    ActivityResultContracts.RequestPermission(), onResult = {})
+            val permissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestMultiplePermissions(),
+                onResult = {}
+            )
+
+            LaunchedEffect(Unit) {
+                val permissions = buildList {
+                    add(Manifest.permission.ACCESS_FINE_LOCATION)
+                    add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        add(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+                permissionLauncher.launch(permissions.toTypedArray())
+            }
+
+            DisposableEffect(Unit) {
+                val handleIntent: (Intent) -> Unit = { receivedIntent ->
+                    receivedIntent.getStringExtra("city")?.let { cityName ->
+                        viewModel.city = cityName
+                        viewModel.page = Route.Home
+                    }
+                }
+                handleIntent(this@MainActivity.intent)
+
+                val listener = Consumer<Intent> { receivedIntent ->
+                    this@MainActivity.intent = receivedIntent
+                    handleIntent(receivedIntent)
+                }
+                addOnNewIntentListener(listener)
+                onDispose {
+                    removeOnNewIntentListener(listener)
+                }
+            }
+
             TanajuraTheme {
                 if (showDialog) CityDialog(
                     onDismiss = { showDialog = false },
@@ -103,7 +146,6 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        launcher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                         MainNavHost(navController = navController, viewModel = viewModel)
                     }
                     LaunchedEffect(viewModel.page) {

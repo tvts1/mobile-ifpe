@@ -27,6 +27,8 @@ import coil.compose.AsyncImage
 import com.ifpe.tanajura.model.City
 import com.ifpe.tanajura.model.Weather
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Notifications
 import com.ifpe.tanajura.ui.nav.Route
 import com.ifpe.tanajura.viewmodel.MainViewModel
 
@@ -71,6 +73,11 @@ fun CityItem(
     modifier: Modifier = Modifier
 ) {
     val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
+    val notificationIcon = if (city.isMonitored) {
+        Icons.Filled.Notifications
+    } else {
+        Icons.Outlined.Notifications
+    }
 
     Row (
         modifier = modifier.fillMaxWidth().padding(8.dp).clickable { onClick() },
@@ -91,6 +98,15 @@ fun CityItem(
                 text = desc,
                 fontSize = 16.sp)
         }
+        Icon(
+            imageVector = notificationIcon,
+            contentDescription = if (city.isMonitored) {
+                "Cidade monitorada"
+            } else {
+                "Cidade não monitorada"
+            },
+            modifier = Modifier.size(28.dp)
+        )
         IconButton (onClick = onClose) {
             Icon(Icons.Filled.Close, contentDescription = "Close")
         }

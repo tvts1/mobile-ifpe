@@ -67,6 +67,21 @@ class FBDatabase {
             .document(city.name!!).set(city)
     }
 
+    fun update(city: FBCity) {
+        if (auth.currentUser == null)
+            throw RuntimeException("User not logged in!")
+        if (city.name == null || city.name!!.isEmpty())
+            throw RuntimeException("City with null or empty name!")
+        val uid = auth.currentUser!!.uid
+        val changes = mapOf(
+            "lat" to city.lat,
+            "lng" to city.lng,
+            "monitored" to city.monitored
+        )
+        db.collection("users").document(uid)
+            .collection("cities").document(city.name!!).update(changes)
+    }
+
     fun remove(city: FBCity) {
         if (auth.currentUser == null)
             throw RuntimeException("User not logged in!")

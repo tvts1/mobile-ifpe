@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,6 +51,13 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                 )
             }
         } else {
+            val city = viewModel.cities.find { it.name == viewModel.city }
+            val icon = if (city?.isMonitored == true) {
+                Icons.Filled.Notifications
+            } else {
+                Icons.Outlined.Notifications
+            }
+
             Row {
                 AsyncImage(
                     model = viewModel.weather(viewModel.city!!).imgUrl,
@@ -56,10 +67,25 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                 )
                 Column {
                     Spacer(modifier = modifier.size(12.dp))
-                    Text(
-                        text = viewModel.city ?: "Selecione uma cidade...",
-                        fontSize = 28.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = viewModel.city ?: "Selecione uma cidade...",
+                            fontSize = 28.sp
+                        )
+                        if (city != null) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = "Monitorada?",
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clickable {
+                                        viewModel.update(
+                                            city.copy(isMonitored = !city.isMonitored)
+                                        )
+                                    }
+                            )
+                        }
+                    }
                     viewModel.city?.let { name ->
                         val weather = viewModel.weather(name)
                         Spacer(modifier = modifier.size(12.dp))

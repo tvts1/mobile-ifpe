@@ -8,23 +8,20 @@ import com.google.android.gms.maps.model.LatLng
 import com.ifpe.tanajura.api.WeatherService
 import com.ifpe.tanajura.api.toForecast
 import com.ifpe.tanajura.api.toWeather
-import com.ifpe.tanajura.db.fb.FBCity
-import com.ifpe.tanajura.db.fb.FBDatabase
-import com.ifpe.tanajura.db.fb.FBUser
-import com.ifpe.tanajura.db.fb.toFBCity
 import com.ifpe.tanajura.model.City
 import com.ifpe.tanajura.model.Forecast
 import com.ifpe.tanajura.model.User
 import com.ifpe.tanajura.model.Weather
 import com.ifpe.tanajura.monitor.ForecastMonitor
+import com.ifpe.tanajura.repo.Repository
 import com.ifpe.tanajura.ui.nav.Route
 
 class MainViewModel(
-    private val db: FBDatabase,
+    private val repository: Repository,
     private val service: WeatherService,
     private val monitor: ForecastMonitor
 ): ViewModel(),
-    FBDatabase.Listener {
+    Repository.Listener {
 
     private val _cities = mutableStateMapOf<String, City>()
 
@@ -50,21 +47,21 @@ class MainViewModel(
         set(tmp) { _page.value = tmp }
 
     init {
-        db.setListener(this)
+        repository.setListener(this)
     }
 
     fun remove(city: City) {
-        db.remove(city.toFBCity())
+        repository.remove(city)
     }
 
     fun update(city: City) {
-        db.update(city.toFBCity())
+        repository.update(city)
     }
 
     fun addCity(name: String) {
         service.getLocation(name) { lat, lng ->
             if (lat != null && lng != null) {
-                db.add(City(name = name, location = LatLng(lat, lng)).toFBCity())
+                repository.add(City(name = name, location = LatLng(lat, lng)))
             }
         }
     }
@@ -72,7 +69,7 @@ class MainViewModel(
     fun addCity(location: LatLng) {
         service.getName(location.latitude, location.longitude) { name ->
             if (name != null) {
-                db.add(City(name = name, location = location).toFBCity())
+                repository.add(City(name = name, location = location))
             }
         }
     }
@@ -112,8 +109,8 @@ class MainViewModel(
         }
     }
 
-    override fun onUserLoaded(user: FBUser) {
-        _user.value = user.toUser()
+    override fun onUserLoaded(user: User) {
+        _user.value = user
     }
 
     override fun onUserSignOut() {
@@ -126,21 +123,19 @@ class MainViewModel(
         page = Route.Home
     }
 
-    override fun onCityAdded(city: FBCity) {
-        val modelCity = city.toCity()
-        _cities[city.name!!] = modelCity
-        monitor.updateCity(modelCity)
+    override fun onCityAdded(city: City) {
+        _cities[city.name] = city
+        monitor.updateCity(city)
     }
 
-    override fun onCityUpdated(city: FBCity) {
-        val modelCity = city.toCity()
+    override fun onCityUpdated(city: City) {
         _cities.remove(city.name)
-        _cities[city.name!!] = modelCity
-        monitor.updateCity(modelCity)
+        _cities[city.name] = city
+        monitor.updateCity(city)
     }
 
-    override fun onCityRemoved(city: FBCity) {
-        monitor.cancelCity(city.toCity())
+    override fun onCityRemoved(city: City) {
+        monitor.cancelCity(city)
         _cities.remove(city.name)
         _weather.remove(city.name)
         _forecast.remove(city.name)
@@ -148,7 +143,7 @@ class MainViewModel(
 }
 
 class MainViewModelFactory(
-    private val db : FBDatabase,
+    private val repository: Repository,
     private val service : WeatherService,
     private val monitor: ForecastMonitor
 ) :
@@ -156,7 +151,7 @@ class MainViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(db, service, monitor) as T
+            return MainViewModel(repository, service, monitor) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -37,7 +37,9 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.ifpe.tanajura.api.WeatherService
 import com.ifpe.tanajura.db.fb.FBDatabase
+import com.ifpe.tanajura.db.local.LocalDatabase
 import com.ifpe.tanajura.monitor.ForecastMonitor
+import com.ifpe.tanajura.repo.Repository
 import com.ifpe.tanajura.ui.nav.BottomNavBar
 import com.ifpe.tanajura.ui.nav.BottomNavItem
 import com.ifpe.tanajura.ui.nav.MainNavHost
@@ -53,12 +55,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val fbDB = remember { FBDatabase() }
+            val uid = Firebase.auth.currentUser!!.uid
+            val fbDB = remember(uid) { FBDatabase() }
+            val localDB = remember(uid) {
+                LocalDatabase(
+                    context = this@MainActivity.applicationContext,
+                    databaseName = "cities_$uid"
+                )
+            }
+            val repository = remember(uid) {
+                Repository(fbDB, localDB)
+            }
             val weatherService = remember { WeatherService(this@MainActivity) }
             val forecastMonitor = remember { ForecastMonitor(this@MainActivity) }
             val viewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(
-                    fbDB,
+                    repository,
                     weatherService,
                     forecastMonitor
                 )

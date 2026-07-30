@@ -1,5 +1,6 @@
 package com.ifpe.tanajura.db.fb
 
+import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentChange
@@ -50,11 +51,11 @@ class FBDatabase {
     fun setListener(listener: Listener? = null) {
         this.listener = listener
     }
-    fun register(user: FBUser) {
+    fun register(user: FBUser): Task<Void> {
         if (auth.currentUser == null)
             throw RuntimeException("User not logged in!")
         val uid = auth.currentUser!!.uid
-        db.collection("users").document(uid + "").set(user);
+        return db.collection("users").document(uid).set(user)
     }
 
     fun add(city: FBCity) {

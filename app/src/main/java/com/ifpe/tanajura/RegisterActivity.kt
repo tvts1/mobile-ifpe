@@ -2,6 +2,7 @@ package com.ifpe.tanajura
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -118,9 +119,31 @@ fun RegisterPage(modifier: Modifier = Modifier) {
                         Firebase.auth.createUserWithEmailAndPassword(cleanEmail, password)
                             .addOnCompleteListener(activity) { task ->
                                 if (task.isSuccessful) {
-                                    FBDatabase().register(User(cleanName, cleanEmail).toFBUser())
-                                    Toast.makeText(activity,
-                                        "Registro OK!", Toast.LENGTH_LONG).show()
+                                    val uid = Firebase.auth.currentUser?.uid
+                                    FBDatabase().register(
+                                        User(cleanName, cleanEmail).toFBUser()
+                                    )
+                                        .addOnSuccessListener {
+                                            Toast.makeText(
+                                                activity.applicationContext,
+                                                "Registro e perfil salvos com sucesso!",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            activity.openMainScreen()
+                                        }
+                                        .addOnFailureListener { exception ->
+                                            Log.e(
+                                                "RegisterActivity",
+                                                "Falha ao salvar users/$uid no Firestore",
+                                                exception
+                                            )
+                                            Toast.makeText(
+                                                activity.applicationContext,
+                                                "Conta criada, mas o perfil não foi salvo: " +
+                                                        exception.localizedMessage,
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
                                 } else {
                                     Toast.makeText(activity,
                                         "Registro FALHOU: ${task.exception?.localizedMessage}",

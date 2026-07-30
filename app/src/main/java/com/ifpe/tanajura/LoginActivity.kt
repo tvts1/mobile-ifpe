@@ -49,6 +49,13 @@ class LoginActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        if (Firebase.auth.currentUser != null) {
+            openMainScreen()
+        }
+    }
 }
 
 @Preview(showBackground = true)
@@ -94,9 +101,8 @@ fun LoginPage(modifier: Modifier = Modifier) {
                     Firebase.auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(activity) { task ->
                             if (task.isSuccessful) {
-                                // O redirecionamento foi removido.
-                                // O código do Passo 1 (observador de estado de auth) fará o roteamento.
                                 Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
+                                activity.openMainScreen()
                             } else {
                                 Toast.makeText(
                                     activity,

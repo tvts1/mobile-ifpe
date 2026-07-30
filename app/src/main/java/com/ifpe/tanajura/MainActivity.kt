@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.util.Consumer
 import com.google.firebase.Firebase
@@ -75,6 +76,7 @@ class MainActivity : ComponentActivity() {
                     forecastMonitor
                 )
             )
+            val user = viewModel.user.collectAsStateWithLifecycle(null).value
             var showDialog by remember { mutableStateOf(false) }
             val navController = rememberNavController()
             val currentRoute = navController.currentBackStackEntryAsState()
@@ -125,7 +127,7 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(
                             title = {
-                                val name = viewModel.user?.name ?: "[carregando...]"
+                                val name = user?.name ?: "[carregando...]"
                                 Text("Bem-vindo/a! $name")
                             },
                             actions = {

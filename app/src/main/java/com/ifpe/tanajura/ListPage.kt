@@ -29,12 +29,18 @@ import com.ifpe.tanajura.model.Weather
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ifpe.tanajura.ui.nav.Route
 import com.ifpe.tanajura.viewmodel.MainViewModel
 
 @Composable
 fun ListPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
-    val cityList = viewModel.cities
+    val cityMap = viewModel.cities
+        .collectAsStateWithLifecycle(emptyMap()).value
+    val cityList = cityMap.values.toList().sortedBy { it.name }
+    val weatherMap = viewModel.weather
+        .collectAsStateWithLifecycle(emptyMap()).value
 
     val activity = LocalActivity.current as Activity
 
@@ -47,9 +53,13 @@ fun ListPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
             items = cityList,
             key = { it.name }
         ) { city ->
+            LaunchedEffect(city.name) {
+                viewModel.loadWeather(city.name)
+            }
+
             CityItem(
                 city = city,
-                weather = viewModel.weather(city.name),
+                weather = weatherMap[city.name] ?: Weather.LOADING,
                 onClose = {
                     viewModel.remove(city)
                     Toast.makeText(activity, "Removendo ${city.name}", Toast.LENGTH_SHORT).show()

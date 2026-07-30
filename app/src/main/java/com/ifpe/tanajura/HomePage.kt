@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ifpe.tanajura.model.Forecast
 import com.ifpe.tanajura.model.Weather
 import com.ifpe.tanajura.viewmodel.MainViewModel
@@ -51,7 +53,21 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                 )
             }
         } else {
-            val city = viewModel.cities.find { it.name == viewModel.city }
+            val cityName = viewModel.city!!
+            val cities = viewModel.cities
+                .collectAsStateWithLifecycle(emptyMap()).value
+            val city = cities[cityName]
+            val weather = viewModel.weather
+                .collectAsStateWithLifecycle(emptyMap()).value[cityName]
+                ?: Weather.LOADING
+            val forecasts = viewModel.forecast
+                .collectAsStateWithLifecycle(emptyMap()).value[cityName]
+
+            LaunchedEffect(cityName) {
+                viewModel.loadWeather(cityName)
+                viewModel.loadForecast(cityName)
+            }
+
             val icon = if (city?.isMonitored == true) {
                 Icons.Filled.Notifications
             } else {
@@ -60,7 +76,7 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
 
             Row {
                 AsyncImage(
-                    model = viewModel.weather(viewModel.city!!).imgUrl,
+                    model = weather.imgUrl,
                     modifier = modifier.size(140.dp),
                     error = painterResource(id = R.drawable.loading),
                     contentDescription = "Imagem"
@@ -86,24 +102,21 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                             )
                         }
                     }
-                    viewModel.city?.let { name ->
-                        val weather = viewModel.weather(name)
-                        Spacer(modifier = modifier.size(12.dp))
-                        Text(
-                            text = if (weather == Weather.LOADING) "..." else weather.desc,
-                            fontSize = 22.sp
-                        )
-                        Spacer(modifier = modifier.size(12.dp))
-                        Text(
-                            text = "Temp: " + weather.temp + "℃",
-                            fontSize = 22.sp
-                        )
-                    }
+                    Spacer(modifier = modifier.size(12.dp))
+                    Text(
+                        text = if (weather == Weather.LOADING) "..." else weather.desc,
+                        fontSize = 22.sp
+                    )
+                    Spacer(modifier = modifier.size(12.dp))
+                    Text(
+                        text = "Temp: " + weather.temp + "℃",
+                        fontSize = 22.sp
+                    )
                 }
             }
-            viewModel.forecast(viewModel.city!!)?.let { forecasts ->
+            forecasts?.let {
                 LazyColumn {
-                    items(items = forecasts) { forecast ->
+                    items(items = it) { forecast ->
                         ForecastItem(forecast, onClick = { })
                     }
                 }

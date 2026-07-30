@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import com.ifpe.tanajura.model.Weather
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
@@ -42,9 +44,23 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
             viewModel.addCity(location)
         }
     ) {
-        viewModel.cities.forEach { city ->
+        val cities = viewModel.cities
+            .collectAsStateWithLifecycle(emptyMap()).value
+        val weatherMap = viewModel.weather
+            .collectAsStateWithLifecycle(emptyMap()).value
+
+        cities.values.forEach { city ->
             city.location?.let { location ->
-                val weather = viewModel.weather(city.name)
+                val weather = weatherMap[city.name] ?: Weather.LOADING
+
+                LaunchedEffect(city.name) {
+                    viewModel.loadWeather(city.name)
+                }
+
+                LaunchedEffect(weather) {
+                    viewModel.loadBitmap(city.name)
+                }
+
                 val image = weather.bitmap
                     ?: ContextCompat.getDrawable(context, R.drawable.loading)!!.toBitmap()
                 val marker = BitmapDescriptorFactory.fromBitmap(
